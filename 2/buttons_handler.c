@@ -23,6 +23,13 @@ enum BUTTONS {
     NEXT_BUTTON //пин 3
 };
 
+char *stringsButtons[] = {
+    "OK",
+    "CANCEL",
+    "PREV",
+    "NEXT"
+};
+
 
 /**
  * @brief Эмуляция прерывания GPIO
@@ -31,9 +38,8 @@ enum BUTTONS {
  *
  */
 void gpio_IRQ(uint8_t pin_no) {
-
+    printf("%d\n", stringsButtons[pin_no]);
 }
-
 
 
 /**
@@ -49,7 +55,14 @@ void gpio_IRQ(uint8_t pin_no) {
  */
 void buttons_process_task(void* arg) {
     for(;;) {
+        for(int i = 0; i < 4; ++i) {
+            bool test = gpio_read(i);
+            if (test == true) {
+                gpio_IRQ(i);
+            }
+        }
 
+        vTaskDelay( 500 / portTICK_PERIOD_MS ); //задержка чтобы не считывать одно нажатие кнопки несколько раз
     }
     vTaskDelete(NULL);
 }
@@ -62,7 +75,7 @@ void buttons_process_task(void* arg) {
 void start_buttons_processing() {
     
     //якобы создаём задачу
-    xTaskCreate(_vBackground_Task, "buttons_task", 1024*4, NULL, 1, NULL);
+    xTaskCreate(buttons_process_task, "buttons_task", 1024*4, NULL, 1, NULL);
 
     //якобы включаем прерывания
     enableGPIO_IRQ();
